@@ -73,4 +73,10 @@ void juggle(CRGB (&leds)[], uint32_t numLeds, uint8_t hue)
   }
 }
 
-#endif FASTLEDPATTERNS_H
+void AllOff(CRGB (&leds)[], uint32_t numLeds, uint8_t hue)
+{
+  fill_solid(leds, numLeds, CRGB::Black);
+}
+
+
+#endif //FASTLEDPATTERNS_H
