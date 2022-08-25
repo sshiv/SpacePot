@@ -6,6 +6,23 @@
 const char MAIN_page[] PROGMEM = R"=====(
 <!DOCTYPE html>
 <html>
+<head>
+<title>SpacePot Mission Command</title>
+    <style>
+      input[type=button],
+      input[type=submit] {
+        background-color: #62529c;
+        border: none;
+        color: #fff;
+        padding: 15px 30px;
+        text-decoration: none;
+        margin: 4px 2px;
+        cursor: pointer;
+        height:100px;
+        width:400px;
+      }
+    </style>
+</head>
 <body>
 <center>
 <h1>SpacePot Mission Command</h1><br>
@@ -33,8 +50,17 @@ const char MAIN_page[] PROGMEM = R"=====(
 )=====";
 //---------------------------------------------------------------
 
+const bool c_ENABLE_AS_ACCESS_POINT = false;
+
+// WiFi AP Config
+IPAddress localIp(192,168,1,1);
+IPAddress gatewayIp(192,168,1,1);
+IPAddress subnet(255,255,255,0);
+//const char* ssid="_InstaShipAP";
+//const char* password="SpacePot0826";
+
 //SSID and Password of your WiFi router
-const char* ssid = "Aaham";
-const char* password = "kaniporisaavi";
+const char* ssid = "SpacePotWiFi";
+const char* password = "wonderfuliris243";
 
 #endif //WEBSERVER_H

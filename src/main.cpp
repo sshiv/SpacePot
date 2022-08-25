@@ -23,9 +23,16 @@ FASTLED_USING_NAMESPACE
 #define LED 2
 
 #define ONBOARD_LED_PIN 2 
-#define PIN D2
-#define PIN2 D3
-const uint32_t TOTAL_LED_COUNT = 300;
+#define PIN0 D0
+#define PIN1 D1
+
+#define PIN2 D4
+#define PIN3 D5
+
+#define PIN4 D7
+#define PIN5 D8
+
+const uint32_t TOTAL_LED_COUNT = 30;
 
 #define MAX_POWER_MILLIAMPS 500
 #define BRIGHTNESS 90
@@ -34,12 +41,19 @@ const uint32_t TOTAL_LED_COUNT = 300;
 //Declare a global object variable from the ESP8266WebServer class.
 ESP8266WebServer server(80); //Server on port 80
 
+
 #ifdef FASTLED
 
 String g_CurrentMode = "off";
 
+CRGB leds0[TOTAL_LED_COUNT];
 CRGB leds1[TOTAL_LED_COUNT];
+
 CRGB leds2[TOTAL_LED_COUNT];
+CRGB leds3[TOTAL_LED_COUNT];
+
+CRGB leds4[TOTAL_LED_COUNT];
+CRGB leds5[TOTAL_LED_COUNT];
 
 
 const uint32_t NUM_LEDS = TOTAL_LED_COUNT;
@@ -70,27 +84,20 @@ void handleForm() {
 
  if (g_CurrentMode == "ascend")
  {
-    gCurrentPatternNumber = 1;
-    Serial.println("LED on");
-    digitalWrite(ONBOARD_LED_PIN,LOW); //LED is connected in reverse
+    gCurrentPatternNumber = 2;
  }
  else if (g_CurrentMode == "descend")
  {
-    gCurrentPatternNumber = 2;
-    Serial.println("LED on");
-    digitalWrite(ONBOARD_LED_PIN,LOW); //LED is connected in reverse
+    gCurrentPatternNumber = 3;
  }
  else if (g_CurrentMode == "ground")
  {
-    gCurrentPatternNumber = 3;
-    Serial.println("LED on");
-    digitalWrite(ONBOARD_LED_PIN,LOW); //LED is connected in reverse
+    gCurrentPatternNumber = 4;
  }
  else
  {
+  // off
    gCurrentPatternNumber = 0;
-    Serial.println("LED off");
-    digitalWrite(ONBOARD_LED_PIN,HIGH); //LED off
  }
  
   server.sendHeader("Location", String("/"), true);
@@ -101,36 +108,58 @@ void handleForm() {
 
 void setup() { 
 
-     Serial.begin(115200);
-     Serial.println("Starting Serial");
-
-  
-      WiFi.begin(ssid, password);     //Connect to your WiFi router
-      Serial.println("Connecting to Wi-Fi");
-
       pinMode(ONBOARD_LED_PIN, OUTPUT);
       digitalWrite(ONBOARD_LED_PIN,LOW);
 
-      FastLED.addLeds<NEOPIXEL,PIN>(leds1,TOTAL_LED_COUNT).setCorrection(TypicalLEDStrip);;
+     Serial.begin(115200);
+     Serial.println("Starting Serial");
+
+
+      FastLED.addLeds<NEOPIXEL,PIN0>(leds0,TOTAL_LED_COUNT).setCorrection(TypicalLEDStrip);;
+	    FastLED.addLeds<NEOPIXEL,PIN1>(leds1,TOTAL_LED_COUNT).setCorrection(TypicalLEDStrip);;
+
 	    FastLED.addLeds<NEOPIXEL,PIN2>(leds2,TOTAL_LED_COUNT).setCorrection(TypicalLEDStrip);;
+	    FastLED.addLeds<NEOPIXEL,PIN3>(leds3,TOTAL_LED_COUNT).setCorrection(TypicalLEDStrip);;
+
+	    FastLED.addLeds<NEOPIXEL,PIN4>(leds4,TOTAL_LED_COUNT).setCorrection(TypicalLEDStrip);;
+	    FastLED.addLeds<NEOPIXEL,PIN5>(leds5,TOTAL_LED_COUNT).setCorrection(TypicalLEDStrip);;
 	    
       FastLED.setBrightness(BRIGHTNESS);
 
-      // Wait for connection
-    while (WiFi.status() != WL_CONNECTED) {
-      digitalWrite(ONBOARD_LED_PIN,LOW);
-      delay(500);
-      Serial.print(".");
-      digitalWrite(ONBOARD_LED_PIN,HIGH);
-    }
-    digitalWrite(ONBOARD_LED_PIN,LOW);
+      if (c_ENABLE_AS_ACCESS_POINT)
+      {
+        Serial.println("Initializing as AP...");
+        WiFi.softAP(ssid, password);
+        IPAddress IP = WiFi.softAPIP();
+        Serial.print("AP IP address: ");
+        Serial.println(IP);
 
-    //If connection successful show IP address in serial monitor
-    Serial.println("");
-    Serial.print("Connected to ");
-    Serial.println(ssid);
-    Serial.print("IP address: ");
-    Serial.println(WiFi.localIP());  //IP address assigned to your ESP
+        Serial.print("AP Local IP address: ");
+        Serial.println(WiFi.localIP());
+        
+      }
+      else
+      {
+        WiFi.begin(ssid, password);     //Connect to your WiFi router
+        Serial.println("Connecting to Wi-Fi");
+
+          // Wait for connection
+        while (WiFi.status() != WL_CONNECTED) {
+          digitalWrite(ONBOARD_LED_PIN,LOW);
+          delay(500);
+          Serial.print(".");
+          digitalWrite(ONBOARD_LED_PIN,HIGH);
+        }
+      
+      //If connection successful show IP address in serial monitor
+      Serial.println("");
+      Serial.print("Connected to ");
+      Serial.println(ssid);
+      Serial.print("IP address: ");
+      Serial.println(WiFi.localIP());  //IP address assigned to your ESP
+      }
+
+      digitalWrite(ONBOARD_LED_PIN,LOW);
       
     server.on("/", handleRoot);      //Which routine to handle at root location. This is display page
     server.on("/action", handleForm); 
@@ -153,8 +182,12 @@ void loop()
   server.handleClient();
 
   // Call the current pattern function once, updating the 'leds' array
+  gPatterns[gCurrentPatternNumber](leds0, NUM_LEDS, gHue);
   gPatterns[gCurrentPatternNumber](leds1, NUM_LEDS, gHue);
   gPatterns[gCurrentPatternNumber](leds2, NUM_LEDS, gHue);
+  gPatterns[gCurrentPatternNumber](leds3, NUM_LEDS, gHue);
+  gPatterns[gCurrentPatternNumber](leds4, NUM_LEDS, gHue);
+  gPatterns[gCurrentPatternNumber](leds5, NUM_LEDS, gHue);
 
   // send the 'leds' array out to the actual LED strip
   FastLED.show();  
@@ -163,7 +196,19 @@ void loop()
 
   // do some periodic updates
   EVERY_N_MILLISECONDS( 20 ) { gHue++; } // slowly cycle the "base color" through the rainbow
-  //EVERY_N_SECONDS( 10 ) { nextPattern(); } // change patterns periodically
+
+  EVERY_N_MILLISECONDS( 1000 ) {
+    // heartbeat 
+    if (WiFi.status() == WL_CONNECTED)
+    {
+       Serial.println("WiFi Still connected");
+        digitalWrite(ONBOARD_LED_PIN, !digitalRead(ONBOARD_LED_PIN));   // Turn the LED on by making the voltage LOW
+    }
+    else
+    {
+        digitalWrite(ONBOARD_LED_PIN, HIGH);
+    }
+  }
 }
 
 #endif // FASTLED
