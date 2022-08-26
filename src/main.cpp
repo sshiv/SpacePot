@@ -1,6 +1,7 @@
 
 
 #include <Arduino.h>
+#include <ArduinoOTA.h>
 #include <Adafruit_NeoPixel.h>
 #include <NeoPixelBus.h>
 
@@ -60,7 +61,7 @@ const uint32_t NUM_ACTIVE_LEDS = TOTAL_LED_COUNT;
 
 #define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
 
-uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
+uint8_t gCurrentPatternNumber = 4; // Index number of which pattern is current
 uint8_t gHue = 0; // rotating "base color" used by many of the patterns
 
 
@@ -169,6 +170,9 @@ void setup() {
       
       //FastLED.setMaxPowerInVoltsAndMilliamps( 5, MAX_POWER_MILLIAMPS);
 
+      // Enable Arduino OTA
+      ArduinoOTA.begin();
+
    }
 
 void nextPattern()
@@ -179,6 +183,9 @@ void nextPattern()
 
 void loop()
 {
+  // Handle OTA and flash it
+  ArduinoOTA.handle();
+
   server.handleClient();
 
   // Call the current pattern function once, updating the 'leds' array
