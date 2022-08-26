@@ -32,11 +32,11 @@ FASTLED_USING_NAMESPACE
 #define PIN4 D7
 #define PIN5 D8
 
-const uint32_t TOTAL_LED_COUNT = 30;
+const uint32_t TOTAL_LED_COUNT = 300;
 
 #define MAX_POWER_MILLIAMPS 500
 #define BRIGHTNESS 90
-#define FRAMES_PER_SECOND  120
+#define FRAMES_PER_SECOND  60
 
 //Declare a global object variable from the ESP8266WebServer class.
 ESP8266WebServer server(80); //Server on port 80
@@ -56,7 +56,7 @@ CRGB leds4[TOTAL_LED_COUNT];
 CRGB leds5[TOTAL_LED_COUNT];
 
 
-const uint32_t NUM_LEDS = TOTAL_LED_COUNT;
+const uint32_t NUM_ACTIVE_LEDS = TOTAL_LED_COUNT;
 
 #define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
 
@@ -70,7 +70,7 @@ SimplePatternList gPatterns = {AllOff, sinelon, juggle, bpm,  simpletrain };
 
 
 void handleRoot() {
- Serial.println("You called root page");
+ Serial.println("Reloading root page");
  String s = MAIN_page;
  s.replace("$MODE$", g_CurrentMode);
  server.send(200, "text/html", s); //Send web page
@@ -182,12 +182,12 @@ void loop()
   server.handleClient();
 
   // Call the current pattern function once, updating the 'leds' array
-  gPatterns[gCurrentPatternNumber](leds0, NUM_LEDS, gHue);
-  gPatterns[gCurrentPatternNumber](leds1, NUM_LEDS, gHue);
-  gPatterns[gCurrentPatternNumber](leds2, NUM_LEDS, gHue);
-  gPatterns[gCurrentPatternNumber](leds3, NUM_LEDS, gHue);
-  gPatterns[gCurrentPatternNumber](leds4, NUM_LEDS, gHue);
-  gPatterns[gCurrentPatternNumber](leds5, NUM_LEDS, gHue);
+  gPatterns[gCurrentPatternNumber](leds0, NUM_ACTIVE_LEDS, gHue);
+  gPatterns[gCurrentPatternNumber](leds1, NUM_ACTIVE_LEDS, gHue);
+  gPatterns[gCurrentPatternNumber](leds2, NUM_ACTIVE_LEDS, gHue);
+  gPatterns[gCurrentPatternNumber](leds3, NUM_ACTIVE_LEDS, gHue);
+  gPatterns[gCurrentPatternNumber](leds4, NUM_ACTIVE_LEDS, gHue);
+  gPatterns[gCurrentPatternNumber](leds5, NUM_ACTIVE_LEDS, gHue);
 
   // send the 'leds' array out to the actual LED strip
   FastLED.show();  
@@ -201,7 +201,6 @@ void loop()
     // heartbeat 
     if (WiFi.status() == WL_CONNECTED)
     {
-       Serial.println("WiFi Still connected");
         digitalWrite(ONBOARD_LED_PIN, !digitalRead(ONBOARD_LED_PIN));   // Turn the LED on by making the voltage LOW
     }
     else
