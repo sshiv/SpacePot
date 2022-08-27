@@ -1,7 +1,7 @@
 
 
 #include <Arduino.h>
-#include <ArduinoOTA.h>
+//#include <ArduinoOTA.h>
 #include <Adafruit_NeoPixel.h>
 #include <NeoPixelBus.h>
 
@@ -14,6 +14,9 @@ FASTLED_USING_NAMESPACE
 
 //ESP Web Server Library to host a web page
 #include <ESP8266WebServer.h>
+#include <ESP8266mDNS.h>
+#include <ESP8266HTTPUpdateServer.h>
+
 
 #include "FastLedPatterns.h"
 #include "WebServer.h"
@@ -41,33 +44,39 @@ const uint32_t TOTAL_LED_COUNT = 300;
 
 //Declare a global object variable from the ESP8266WebServer class.
 ESP8266WebServer server(80); //Server on port 80
-
+ESP8266HTTPUpdateServer httpUpdater;
 
 #ifdef FASTLED
 
 String g_CurrentMode = "off";
 
-CRGB leds0[TOTAL_LED_COUNT];
-CRGB leds1[TOTAL_LED_COUNT];
+CRGB top_leds0[TOTAL_LED_COUNT];
+CRGB top_leds1[TOTAL_LED_COUNT];
 
-CRGB leds2[TOTAL_LED_COUNT];
-CRGB leds3[TOTAL_LED_COUNT];
+CRGB mid_leds2[TOTAL_LED_COUNT];
+CRGB mid_leds3[TOTAL_LED_COUNT];
 
-CRGB leds4[TOTAL_LED_COUNT];
-CRGB leds5[TOTAL_LED_COUNT];
+CRGB bottom_leds4[TOTAL_LED_COUNT];
+CRGB bottom_leds5[TOTAL_LED_COUNT];
 
 
 const uint32_t NUM_ACTIVE_LEDS = TOTAL_LED_COUNT;
 
 #define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
 
-uint8_t gCurrentPatternNumber = 4; // Index number of which pattern is current
+uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
+uint8_t g_TopCurrentPatternNumber = 0; // Index number of which pattern is current
+uint8_t g_MidCurrentPatternNumber = 0; // Index number of which pattern is current
+uint8_t g_BottomCurrentPatternNumber = 0; // Index number of which pattern is current
+
+
+
 uint8_t gHue = 0; // rotating "base color" used by many of the patterns
+uint8_t g_TopHue = 0; // rotating "base color" used by many of the patterns
+uint8_t g_MidHue = 0; // rotating "base color" used by many of the patterns
+uint8_t g_BottomHue = 0; // rotating "base color" used by many of the patterns
 
 
-// List of patterns to cycle through.  Each is defined as a separate function below.
-typedef void (*SimplePatternList[])(CRGB (&leds)[], uint32_t numLeds, uint8_t hue);
-SimplePatternList gPatterns = {AllOff, sinelon, juggle, bpm,  simpletrain };
 
 
 void handleRoot() {
@@ -79,26 +88,51 @@ void handleRoot() {
 
 
 void handleForm() { 
-  Serial.println("In HandleForm");
+  Serial.println("In HandleForm - 1.1");
   g_CurrentMode = server.arg("mode");
  Serial.print("Got Mode : ");Serial.println(g_CurrentMode);
 
  if (g_CurrentMode == "ascend")
  {
-    gCurrentPatternNumber = 2;
+    g_TopCurrentPatternNumber = PatternEnum::eJuggle;
+    g_TopHue = gCurrentPatternNumber;
+
+    g_MidCurrentPatternNumber = PatternEnum::eJuggle;
+    g_MidHue = gCurrentPatternNumber;
+    
+    g_BottomCurrentPatternNumber = PatternEnum::ePartyBPM;
+    g_BottomHue = HSVHue::HUE_RED;
+
  }
  else if (g_CurrentMode == "descend")
  {
-    gCurrentPatternNumber = 3;
+    g_TopCurrentPatternNumber = PatternEnum::eOceanBPM;
+    g_TopHue = gCurrentPatternNumber;
+
+    g_MidCurrentPatternNumber = PatternEnum::ePartyBPM;
+    g_MidHue = gCurrentPatternNumber;
+    
+    g_BottomCurrentPatternNumber = PatternEnum::eLavaBPM;
+    g_BottomHue = gCurrentPatternNumber;
  }
  else if (g_CurrentMode == "ground")
  {
-    gCurrentPatternNumber = 4;
+    g_TopCurrentPatternNumber = PatternEnum::eSineLon;
+    g_TopHue = HSVHue::HUE_AQUA;
+
+    g_MidCurrentPatternNumber = PatternEnum::eSineLon;
+    g_MidHue = HSVHue::HUE_YELLOW;
+    
+    g_BottomCurrentPatternNumber = PatternEnum::eSineLon;
+    g_BottomHue = HSVHue::HUE_RED;
+    
  }
  else
  {
-  // off
-   gCurrentPatternNumber = 0;
+    // off
+    g_TopCurrentPatternNumber = PatternEnum::eAllOff;
+    g_MidCurrentPatternNumber = PatternEnum::eAllOff;
+    g_BottomCurrentPatternNumber = PatternEnum::eAllOff;
  }
  
   server.sendHeader("Location", String("/"), true);
@@ -116,14 +150,14 @@ void setup() {
      Serial.println("Starting Serial");
 
 
-      FastLED.addLeds<NEOPIXEL,PIN0>(leds0,TOTAL_LED_COUNT).setCorrection(TypicalLEDStrip);;
-	    FastLED.addLeds<NEOPIXEL,PIN1>(leds1,TOTAL_LED_COUNT).setCorrection(TypicalLEDStrip);;
+      FastLED.addLeds<NEOPIXEL,PIN0>(top_leds0,TOTAL_LED_COUNT).setCorrection(TypicalLEDStrip);;
+	    FastLED.addLeds<NEOPIXEL,PIN1>(top_leds1,TOTAL_LED_COUNT).setCorrection(TypicalLEDStrip);;
 
-	    FastLED.addLeds<NEOPIXEL,PIN2>(leds2,TOTAL_LED_COUNT).setCorrection(TypicalLEDStrip);;
-	    FastLED.addLeds<NEOPIXEL,PIN3>(leds3,TOTAL_LED_COUNT).setCorrection(TypicalLEDStrip);;
+	    FastLED.addLeds<NEOPIXEL,PIN2>(mid_leds2,TOTAL_LED_COUNT).setCorrection(TypicalLEDStrip);;
+	    FastLED.addLeds<NEOPIXEL,PIN3>(mid_leds3,TOTAL_LED_COUNT).setCorrection(TypicalLEDStrip);;
 
-	    FastLED.addLeds<NEOPIXEL,PIN4>(leds4,TOTAL_LED_COUNT).setCorrection(TypicalLEDStrip);;
-	    FastLED.addLeds<NEOPIXEL,PIN5>(leds5,TOTAL_LED_COUNT).setCorrection(TypicalLEDStrip);;
+	    FastLED.addLeds<NEOPIXEL,PIN4>(bottom_leds4,TOTAL_LED_COUNT).setCorrection(TypicalLEDStrip);;
+	    FastLED.addLeds<NEOPIXEL,PIN5>(bottom_leds5,TOTAL_LED_COUNT).setCorrection(TypicalLEDStrip);;
 	    
       FastLED.setBrightness(BRIGHTNESS);
 
@@ -158,20 +192,30 @@ void setup() {
       Serial.println(ssid);
       Serial.print("IP address: ");
       Serial.println(WiFi.localIP());  //IP address assigned to your ESP
+
+  
       }
 
-      digitalWrite(ONBOARD_LED_PIN,LOW);
+    digitalWrite(ONBOARD_LED_PIN,LOW);
       
     server.on("/", handleRoot);      //Which routine to handle at root location. This is display page
     server.on("/action", handleForm); 
 
-  server.begin();                  //Start server
-  Serial.println("HTTP server started");
+    MDNS.begin(c_DNS_NAME);
+
+    httpUpdater.setup(&server);
+
+
+    server.begin();                  //Start server
+
+      MDNS.addService("http", "tcp", 80);
+
+    Serial.println("HTTP server started");
       
       //FastLED.setMaxPowerInVoltsAndMilliamps( 5, MAX_POWER_MILLIAMPS);
 
       // Enable Arduino OTA
-      ArduinoOTA.begin();
+      //ArduinoOTA.begin();
 
    }
 
@@ -183,18 +227,22 @@ void nextPattern()
 
 void loop()
 {
-  // Handle OTA and flash it
-  ArduinoOTA.handle();
+   server.handleClient();
 
-  server.handleClient();
+  // Handle OTA and flash it
+  //ArduinoOTA.handle();
+
+ 
 
   // Call the current pattern function once, updating the 'leds' array
-  gPatterns[gCurrentPatternNumber](leds0, NUM_ACTIVE_LEDS, gHue);
-  gPatterns[gCurrentPatternNumber](leds1, NUM_ACTIVE_LEDS, gHue);
-  gPatterns[gCurrentPatternNumber](leds2, NUM_ACTIVE_LEDS, gHue);
-  gPatterns[gCurrentPatternNumber](leds3, NUM_ACTIVE_LEDS, gHue);
-  gPatterns[gCurrentPatternNumber](leds4, NUM_ACTIVE_LEDS, gHue);
-  gPatterns[gCurrentPatternNumber](leds5, NUM_ACTIVE_LEDS, gHue);
+  gPatterns[g_TopCurrentPatternNumber](top_leds0, NUM_ACTIVE_LEDS, g_TopHue);
+  gPatterns[g_TopCurrentPatternNumber](top_leds1, NUM_ACTIVE_LEDS, g_TopHue);
+  
+  gPatterns[g_MidCurrentPatternNumber](mid_leds2, NUM_ACTIVE_LEDS, g_MidHue);
+  gPatterns[g_MidCurrentPatternNumber](mid_leds3, NUM_ACTIVE_LEDS, g_MidHue);
+  
+  gPatterns[g_BottomCurrentPatternNumber](bottom_leds4, NUM_ACTIVE_LEDS, g_BottomHue);
+  gPatterns[g_BottomCurrentPatternNumber](bottom_leds5, NUM_ACTIVE_LEDS, g_BottomHue);
 
   // send the 'leds' array out to the actual LED strip
   FastLED.show();  

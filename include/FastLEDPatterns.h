@@ -1,6 +1,10 @@
 #ifndef FASTLEDPATTERNS_H
 #define FASTLEDPATTERNS_H
 
+#define FASTLED_ALLOW_INTERRUPTS 0
+#include <FastLED.h>
+
+
 void rainbow(CRGB (&leds)[], uint32_t numLeds, uint8_t hue) 
 {
   // FastLED's built-in rainbow generator
@@ -40,7 +44,7 @@ void sinelon(CRGB (&leds)[],  uint32_t numLeds, uint8_t hue)
 
 void simpletrain(CRGB (&leds)[],  uint32_t numLeds, uint8_t hue)
 {
-  	fadeToBlackBy( leds, numLeds, 10);
+  	fadeToBlackBy( leds, numLeds, 40);
 		
     uint8_t i = beat16(3000);
 
@@ -51,16 +55,37 @@ void simpletrain(CRGB (&leds)[],  uint32_t numLeds, uint8_t hue)
 		leds[i+30] = CHSV(255, 255, 192);
 }
 
-void bpm(CRGB (&leds)[], uint32_t numLeds, uint8_t hue)
+void PulseColorsFromPalette(CRGB (&leds)[], uint32_t numLeds, uint8_t hue, const CRGBPalette16& palette)
 {
   // colored stripes pulsing at a defined Beats-Per-Minute (BPM)
   uint8_t BeatsPerMinute = 62;
-  CRGBPalette16 palette = PartyColors_p;
+  //CRGBPalette16 palette = LavaColors_p ;
   uint8_t beat = beatsin8( BeatsPerMinute, 64, 255);
   for( int i = 0; i < numLeds; i++) { //9948
     leds[i] = ColorFromPalette(palette, hue+(i*2), beat-hue+(i*10));
   }
 }
+
+void PartyBPM(CRGB (&leds)[], uint32_t numLeds, uint8_t hue)
+{
+  PulseColorsFromPalette(leds, numLeds, hue, PartyColors_p);
+}
+
+void LavaBPM(CRGB (&leds)[], uint32_t numLeds, uint8_t hue)
+{
+  PulseColorsFromPalette(leds, numLeds, hue, LavaColors_p);
+}
+
+void OceanBPM(CRGB (&leds)[], uint32_t numLeds, uint8_t hue)
+{
+  PulseColorsFromPalette(leds, numLeds, hue, OceanColors_p);
+}
+
+void HeatBPM(CRGB (&leds)[], uint32_t numLeds, uint8_t hue)
+{
+  PulseColorsFromPalette(leds, numLeds, hue, HeatColors_p );
+}
+
 
 void juggle(CRGB (&leds)[], uint32_t numLeds, uint8_t hue)
 {
@@ -77,6 +102,24 @@ void AllOff(CRGB (&leds)[], uint32_t numLeds, uint8_t hue)
 {
   fill_solid(leds, numLeds, CRGB::Black);
 }
+
+enum PatternEnum
+{
+  eAllOff = 0,
+  eSineLon,
+  eJuggle,
+  ePartyBPM,
+  eOceanBPM,
+  eLavaBPM,
+  eHeatBPM,
+  eSimpleTrain,
+  eRainbow,
+  eConfetti
+};
+
+// List of patterns to cycle through.  Each is defined as a separate function below.
+typedef void (*SimplePatternList[])(CRGB (&leds)[], uint32_t numLeds, uint8_t hue);
+SimplePatternList gPatterns = {AllOff, sinelon, juggle, PartyBPM, OceanBPM, LavaBPM, HeatBPM,  simpletrain, rainbowWithGlitter, confetti };
 
 
 #endif //FASTLEDPATTERNS_H

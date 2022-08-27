@@ -60,6 +60,7 @@ IPAddress subnet(255,255,255,0);
 //const char* password="SpacePot0826";
 
 //SSID and Password of your WiFi router
+const char* c_DNS_NAME = "spacepotweb";
 const char* ssid = "SpacePotWiFi";
 const char* password = "wonderfuliris243";
 
