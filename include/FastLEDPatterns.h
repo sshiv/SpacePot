@@ -4,6 +4,8 @@
 #define FASTLED_ALLOW_INTERRUPTS 0
 #include <FastLED.h>
 
+uint32_t g_LedLutIndex = 0;
+
 
 void rainbow(CRGB (&leds)[], uint32_t numLeds, uint8_t hue) 
 {
@@ -42,17 +44,56 @@ void sinelon(CRGB (&leds)[],  uint32_t numLeds, uint8_t hue)
 }
 
 
-void simpletrain(CRGB (&leds)[],  uint32_t numLeds, uint8_t hue)
+void simpletrain1(CRGB (&leds)[],  uint32_t numLeds, uint8_t hue)
 {
+    const int c_TrainSize = 45;
+    static int startIndex = 0;
   	fadeToBlackBy( leds, numLeds, 40);
 		
-    uint8_t i = beat16(3000);
+    for (int i = 0; i < c_TrainSize; ++i)
+    {
+      leds[startIndex + i] += CRGB::White;
+    }
+    startIndex = (startIndex + c_TrainSize) % numLeds;
+}
 
-		// Set the i'th led to red
-		leds[i] = CHSV(255, 255, 192);
-		leds[i+10] = CHSV(255, 255, 192);
-		leds[i+20] = CHSV(255, 255, 192);
-		leds[i+30] = CHSV(255, 255, 192);
+struct LEDTrainData
+{
+  uint32_t StartIndex;
+  uint32_t EndIndex;
+  uint32_t Step;
+};
+
+LEDTrainData c_LED_LUT[] = {
+            {16, 60, 1}, //0
+            {60, 109, 1}, //1
+            {109, 157, 1}, //2
+            {157, 204, 1}, //3
+            {204, 253, 1}, //4
+            {253, 300, 1}, //5
+            {300, 345, 1}, //6
+            {345, 390, 1}, //7
+            {390, 443, 1}, //8
+            {441, 488, 1}, //9
+            {488, 538, 1},
+            {538, 600, 1}
+};
+
+void simpletrain(CRGB (&leds)[],  uint32_t numLeds, uint8_t hue)
+{
+    fadeToBlackBy( leds, numLeds, 40);
+		
+    uint32_t lutIndex = g_LedLutIndex;
+
+    if (lutIndex >= sizeof(c_LED_LUT) / sizeof(c_LED_LUT[0]))
+    {
+      return;
+    }
+
+    for (uint32_t i = c_LED_LUT[lutIndex].StartIndex; i < c_LED_LUT[lutIndex].EndIndex; i+=c_LED_LUT[lutIndex].Step)
+    {
+      leds[i] = CRGB::White;
+    }
 }
 
 void PulseColorsFromPalette(CRGB (&leds)[], uint32_t numLeds, uint8_t hue, const CRGBPalette16& palette)
@@ -61,7 +102,7 @@ void PulseColorsFromPalette(CRGB (&leds)[], uint32_t numLeds, uint8_t hue, const
   uint8_t BeatsPerMinute = 62;
   //CRGBPalette16 palette = LavaColors_p ;
   uint8_t beat = beatsin8( BeatsPerMinute, 64, 255);
-  for( int i = 0; i < numLeds; i++) { //9948
+  for( uint32_t i = 0; i < numLeds; i++) { //9948
     leds[i] = ColorFromPalette(palette, hue+(i*2), beat-hue+(i*10));
   }
 }
@@ -69,6 +110,7 @@ void PulseColorsFromPalette(CRGB (&leds)[], uint32_t numLeds, uint8_t hue, const
 void PartyBPM(CRGB (&leds)[], uint32_t numLeds, uint8_t hue)
 {
   PulseColorsFromPalette(leds, numLeds, hue, PartyColors_p);
+  simpletrain(leds, numLeds, hue);
 }
 
 void LavaBPM(CRGB (&leds)[], uint32_t numLeds, uint8_t hue)
@@ -84,6 +126,11 @@ void OceanBPM(CRGB (&leds)[], uint32_t numLeds, uint8_t hue)
 void HeatBPM(CRGB (&leds)[], uint32_t numLeds, uint8_t hue)
 {
   PulseColorsFromPalette(leds, numLeds, hue, HeatColors_p );
+}
+
+void CloudBPM(CRGB (&leds)[], uint32_t numLeds, uint8_t hue)
+{
+  PulseColorsFromPalette(leds, numLeds, hue, CloudColors_p );
 }
 
 
@@ -112,6 +159,7 @@ enum PatternEnum
   eOceanBPM,
   eLavaBPM,
   eHeatBPM,
+  eCloudBPM,
   eSimpleTrain,
   eRainbow,
   eConfetti
@@ -119,7 +167,7 @@ enum PatternEnum
 
 // List of patterns to cycle through.  Each is defined as a separate function below.
 typedef void (*SimplePatternList[])(CRGB (&leds)[], uint32_t numLeds, uint8_t hue);
-SimplePatternList gPatterns = {AllOff, sinelon, juggle, PartyBPM, OceanBPM, LavaBPM, HeatBPM,  simpletrain, rainbowWithGlitter, confetti };
+SimplePatternList gPatterns = {AllOff, sinelon, juggle, PartyBPM, OceanBPM, LavaBPM, HeatBPM, CloudBPM, simpletrain, rainbowWithGlitter, confetti };
 
 
 #endif //FASTLEDPATTERNS_H

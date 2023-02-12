@@ -88,19 +88,19 @@ void handleRoot() {
 
 
 void handleForm() { 
-  Serial.println("In HandleForm - 1.1");
+  Serial.println("In HandleForm");
   g_CurrentMode = server.arg("mode");
  Serial.print("Got Mode : ");Serial.println(g_CurrentMode);
 
  if (g_CurrentMode == "ascend")
  {
-    g_TopCurrentPatternNumber = PatternEnum::eJuggle;
+    g_TopCurrentPatternNumber = PatternEnum::eOceanBPM;
     g_TopHue = gCurrentPatternNumber;
 
     g_MidCurrentPatternNumber = PatternEnum::eJuggle;
     g_MidHue = gCurrentPatternNumber;
     
-    g_BottomCurrentPatternNumber = PatternEnum::ePartyBPM;
+    g_BottomCurrentPatternNumber = PatternEnum::eHeatBPM;
     g_BottomHue = HSVHue::HUE_RED;
 
  }
@@ -112,19 +112,36 @@ void handleForm() {
     g_MidCurrentPatternNumber = PatternEnum::ePartyBPM;
     g_MidHue = gCurrentPatternNumber;
     
-    g_BottomCurrentPatternNumber = PatternEnum::eLavaBPM;
+    g_BottomCurrentPatternNumber = PatternEnum::eHeatBPM;
     g_BottomHue = gCurrentPatternNumber;
  }
  else if (g_CurrentMode == "ground")
  {
-    g_TopCurrentPatternNumber = PatternEnum::eSineLon;
+    g_TopCurrentPatternNumber = PatternEnum::ePartyBPM;
     g_TopHue = HSVHue::HUE_AQUA;
 
-    g_MidCurrentPatternNumber = PatternEnum::eSineLon;
+    g_MidCurrentPatternNumber = PatternEnum::eLavaBPM;
     g_MidHue = HSVHue::HUE_YELLOW;
     
-    g_BottomCurrentPatternNumber = PatternEnum::eSineLon;
+    g_BottomCurrentPatternNumber = PatternEnum::eHeatBPM;
     g_BottomHue = HSVHue::HUE_RED;
+    
+ }
+ else if (g_CurrentMode == "setadvanced")
+ {
+    g_BottomCurrentPatternNumber = PatternEnum::eSimpleTrain;
+    g_BottomHue = HSVHue::HUE_RED;
+
+    g_MidCurrentPatternNumber = PatternEnum::eLavaBPM;
+    g_MidHue = HSVHue::HUE_YELLOW;
+
+    String advmode = server.arg("advmode");
+    Serial.print("Got Advanced Mode : ");Serial.println(advmode);
+    g_LedLutIndex = ((12 - advmode.toInt()) + 8) % 12;
+
+    g_LedLutIndex = g_LedLutIndex >= 12 ? 0 : g_LedLutIndex;
+
+
     
  }
  else

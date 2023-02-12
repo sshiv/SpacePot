@@ -38,6 +38,10 @@ const char MAIN_page[] PROGMEM = R"=====(
     <label for="ground">Ground</label><br>  
     <input type="radio" id="ascend" name="mode" value="ascend">
     <label for="ascend">Ascend</label><br>
+    <input type="radio" id="setadvanced" name="mode" value="setadvanced">
+    <label for="setadvanced">SetAdvanced</label>
+    <input type="text" id="advmodevalue" name="advmode" value="0">
+    <br><br>
     <input type="radio" id="restart" name="mode" value="restart">
     <label for="restart">Restart</label><br><br>
     <input type="submit" value="Submit">
@@ -56,12 +60,10 @@ const bool c_ENABLE_AS_ACCESS_POINT = false;
 IPAddress localIp(192,168,1,1);
 IPAddress gatewayIp(192,168,1,1);
 IPAddress subnet(255,255,255,0);
-//const char* ssid="_InstaShipAP";
-//const char* password="SpacePot0826";
 
 //SSID and Password of your WiFi router
 const char* c_DNS_NAME = "spacepotweb";
-const char* ssid = "SpacePotWiFi";
-const char* password = "wonderfuliris243";
+const char* ssid = "<YOUR_SSID>";
+const char* password = "<YOUR_PASSWORD>";
 
 #endif //WEBSERVER_H
